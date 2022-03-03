@@ -1444,6 +1444,7 @@ class WP_Job_Manager_Post_Types {
 	 * @return array See `job_manager_job_listing_data_fields` filter for more documentation.
 	 */
 	public static function get_job_listing_fields() {
+		//error_log((new Exception())->getTraceAsString());
 		$default_field = [
 			'label'              => null,
 			'placeholder'        => null,

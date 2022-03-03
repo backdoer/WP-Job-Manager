@@ -9,6 +9,7 @@
     <custom-field action="copy">_filled</custom-field>
     <custom-field action="copy">_featured</custom-field>
     <custom-field action="copy">_job_expires</custom-field>
+    <custom-field action="translate">_job_board</custom-field>
     <custom-field action="translate">_job_location</custom-field>
     <custom-field action="translate">_application</custom-field>
     <custom-field action="translate">_company_name</custom-field>

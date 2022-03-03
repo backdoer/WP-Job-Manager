@@ -586,7 +586,7 @@ class WP_Job_Manager_Writepanels {
 		wp_nonce_field( 'save_meta_data', 'job_manager_nonce' );
 
 		do_action( 'job_manager_job_listing_data_start', $thepostid );
-
+		//error_log(json_encode($this->job_listing_fields()));
 		foreach ( $this->job_listing_fields() as $key => $field ) {
 			$type = ! empty( $field['type'] ) ? $field['type'] : 'text';
 

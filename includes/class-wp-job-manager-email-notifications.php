@@ -592,12 +592,12 @@ final class WP_Job_Manager_Email_Notifications {
 	 * @param int    $days_notice
 	 */
 	private static function send_expiring_notice( $email_notification_key, $days_notice ) {
-		$notice_before_datetime = current_datetime()->add( new DateInterval( 'P' . $days_notice . 'D' ) );
+		$notice_before_datetime = current_datetime()->sub( new DateInterval( 'P' . $days_notice . 'D' ) );
 
 		$job_ids = get_posts(
 			[
 				'post_type'      => 'job_listing',
-				'post_status'    => 'publish',
+				'post_status' 	 =>  array('expired','publish'),
 				'fields'         => 'ids',
 				'posts_per_page' => -1,
 				'meta_query'     => [

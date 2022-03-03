@@ -59,7 +59,7 @@ class WP_Job_Manager_Shortcodes {
 	public function __construct() {
 		add_action( 'wp', [ $this, 'shortcode_action_handler' ] );
 		add_action( 'job_manager_job_dashboard_content_edit', [ $this, 'edit_job' ] );
-		add_action( 'job_manager_job_filters_end', [ $this, 'job_filter_job_types' ], 20 );
+		add_action( 'job_manager_job_filters_start', [ $this, 'job_filter_job_types' ], 20 );
 		add_action( 'job_manager_job_filters_end', [ $this, 'job_filter_results' ], 30 );
 		add_action( 'job_manager_output_jobs_no_results', [ $this, 'output_no_results' ] );
 		add_shortcode( 'submit_job_form', [ $this, 'submit_job_form' ] );

@@ -49,36 +49,34 @@ class WP_Job_Manager_Category_Walker extends Walker {
 	 * @param int    $current_object_id
 	 */
 	public function start_el( &$output, $object, $depth = 0, $args = [], $current_object_id = 0 ) {
-
-		if ( ! empty( $args['hierarchical'] ) ) {
+		if ( $depth || !$args["has_children"] ) {
 			$pad = str_repeat( '&nbsp;', $depth * 3 );
+			$cat_name = apply_filters( 'list_product_cats', $object->name, $object );
+
+			$value = isset( $args['value'] ) && 'id' === $args['value'] ? $object->term_id : $object->slug;
+	
+			$output .= "\t<option class=\"level-" . intval( $depth ) . '" value="' . esc_attr( $value ) . '"';
+	
+			if (
+				isset( $args['selected'] ) && (
+					$value == $args['selected'] // phpcs:ignore WordPress.PHP.StrictComparisons
+					|| ( is_array( $args['selected'] ) && in_array( $value, $args['selected'] ) ) // phpcs:ignore WordPress.PHP.StrictInArray
+				)
+			) {
+				$output .= ' selected="selected"';
+			}
+	
+			$output .= '>';
+	
+			$output .= $pad . esc_html( $cat_name );
+	
+			if ( ! empty( $args['show_count'] ) ) {
+				$output .= '&nbsp;(' . intval( $object->count ) . ')';
+			}
+	
+			$output .= "</option>\n";
 		} else {
-			$pad = '';
+			$output .= "<optgroup label='".$object->name."'>";
 		}
-
-		$cat_name = apply_filters( 'list_product_cats', $object->name, $object );
-
-		$value = isset( $args['value'] ) && 'id' === $args['value'] ? $object->term_id : $object->slug;
-
-		$output .= "\t<option class=\"level-" . intval( $depth ) . '" value="' . esc_attr( $value ) . '"';
-
-		if (
-			isset( $args['selected'] ) && (
-				$value == $args['selected'] // phpcs:ignore WordPress.PHP.StrictComparisons
-				|| ( is_array( $args['selected'] ) && in_array( $value, $args['selected'] ) ) // phpcs:ignore WordPress.PHP.StrictInArray
-			)
-		) {
-			$output .= ' selected="selected"';
-		}
-
-		$output .= '>';
-
-		$output .= $pad . esc_html( $cat_name );
-
-		if ( ! empty( $args['show_count'] ) ) {
-			$output .= '&nbsp;(' . intval( $object->count ) . ')';
-		}
-
-		$output .= "</option>\n";
 	}
 }

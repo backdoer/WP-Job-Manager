@@ -23,6 +23,7 @@ if ( ! function_exists( 'get_job_listings' ) ) :
 			[
 				'search_location'   => '',
 				'search_keywords'   => '',
+				'search_boards'     => [],
 				'search_categories' => [],
 				'job_types'         => [],
 				'post_status'       => [],
@@ -144,7 +145,18 @@ if ( ! function_exists( 'get_job_listings' ) ) :
 			add_filter( 'posts_search', 'get_job_listings_keyword_search' );
 		}
 
+		global $job_manager_boards;
+		$job_manager_boards = $args['search_boards'];
+		//error_log("Filtering ".json_encode($job_manager_boards));
+
+		if (!empty($job_manager_boards))
+		{
+			$query_args['search_boards'] = $job_manager_boards;
+			add_filter('posts_search', 'get_job_listings_board_search');
+		}
+
 		$query_args = apply_filters( 'job_manager_get_listings', $query_args, $args );
+		//error_log(json_encode($query_args));
 
 		if ( empty( $query_args['meta_query'] ) ) {
 			unset( $query_args['meta_query'] );
@@ -162,8 +174,9 @@ if ( ! function_exists( 'get_job_listings' ) ) :
 
 		do_action( 'before_get_job_listings', $query_args, $args );
 
-		// Cache results.
-		if ( apply_filters( 'get_job_listings_cache_results', true ) ) {
+		// Cache results. - disabled for now, we need to be responsive to the employer authorization changes
+		// TODO: allow caching, but invalidate when authorization is updated
+		if (false && apply_filters( 'get_job_listings_cache_results', true ) ) {
 			$to_hash              = wp_json_encode( $query_args );
 			$query_args_hash      = 'jm_' . md5( $to_hash . JOB_MANAGER_VERSION ) . WP_Job_Manager_Cache_Helper::get_transient_version( 'get_job_listings' );
 			$result               = false;
@@ -221,6 +234,7 @@ if ( ! function_exists( 'get_job_listings' ) ) :
 		do_action( 'after_get_job_listings', $query_args, $args );
 
 		remove_filter( 'posts_search', 'get_job_listings_keyword_search' );
+		remove_filter( 'posts_search', 'get_job_listings_board_search' );
 
 		return $result;
 	}
@@ -247,6 +261,27 @@ if ( ! function_exists( '_wpjm_shuffle_featured_post_results_helper' ) ) :
 			}
 		}
 		return wp_rand( -1, 1 );
+	}
+endif;
+
+if (!function_exists('get_job_listings_board_search')):
+	function get_job_listings_board_search($search)
+	{
+		global $wpdb, $job_manager_boards;
+		//error_log(json_encode($job_manager_boards));
+		if (empty($job_manager_boards) || $job_manager_boards[0] == "undefined") // protect against JS errors.
+			return $search;
+		// TODO: rework the storage when the performance starts becoming inadequate
+		$like_expr = join(' or ', array_map(function ($el) {
+			return "m.meta_value like '%".esc_sql($el)."%'";
+		}, $job_manager_boards));
+		$in_expr = "(".join(',', array_map(function($el) {
+			return '"'.esc_sql($el).'"';}, $job_manager_boards)).")";
+		$filter = "$search and {$wpdb->posts}.id in (select post_id from {$wpdb->postmeta} m join ".
+		"wp_jobwise_job_boards jb on jb.name in $in_expr ".
+		"join wp_jobwise_job_job_boards wjb on wjb.job_board_id = jb.id and wjb.job_post_id = post_id and wjb.approved)";
+		
+		return $filter;
 	}
 endif;
 
@@ -470,6 +505,7 @@ if ( ! function_exists( 'job_manager_get_filtered_links' ) ) :
 								'search_location' => $args['search_location'],
 								'job_categories'  => implode( ',', $job_categories ),
 								'search_keywords' => $args['search_keywords'],
+								'search_boards' => $args['search_boards'],
 							]
 						)
 					),
@@ -482,6 +518,7 @@ if ( ! function_exists( 'job_manager_get_filtered_links' ) ) :
 			count( (array) $args['filter_job_types'] ) === count( $types )
 			&& empty( $args['search_keywords'] )
 			&& empty( $args['search_location'] )
+			&& empty( $args['search_boards'] )
 			&& empty( $args['search_categories'] )
 			&& ! apply_filters( 'job_manager_get_listings_custom_filter', false )
 		) {
@@ -1131,7 +1168,7 @@ function job_manager_dropdown_categories( $args = '' ) {
 		'value'           => 'id',
 		'multiple'        => true,
 		'show_option_all' => false,
-		'placeholder'     => __( 'Choose a category&hellip;', 'wp-job-manager' ),
+		'placeholder'     => __( 'Job Category', 'wp-job-manager' ),
 		'no_results_text' => __( 'No results match', 'wp-job-manager' ),
 		'multiple_text'   => __( 'Select Some Options', 'wp-job-manager' ),
 	];
